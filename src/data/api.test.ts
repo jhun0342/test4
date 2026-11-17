@@ -11,10 +11,17 @@ class MemStorage {
 let api: LocalApi;
 beforeEach(async () => {
   api = new LocalApi(new MemStorage());
-  await api.saveMe({ nickname: '나', age: 30, assetBand: 3, interests: ['주식'], mode: 'similar', intro: '' });
+  await api.saveMe({ nickname: '나', age: 30, assetBand: 3, risk: 1, lifestyle: 1, interests: ['주식'], mode: 'similar', intro: '' });
 });
 
 describe('LocalApi', () => {
+  it('초대 코드 없이는 미가입, 올바른 코드면 통과', async () => {
+    expect(await api.hasInvite()).toBe(false);
+    expect(await api.redeemInvite('wrong')).toBe(false);
+    expect(await api.redeemInvite('gyeol-beta')).toBe(true);
+    expect(await api.hasInvite()).toBe(true);
+  });
+
   it('하루 추천은 3명이고 같은 날 반복 호출해도 동일', async () => {
     const a = await api.getDailyRecommendations();
     const b = await api.getDailyRecommendations();

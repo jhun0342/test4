@@ -9,6 +9,14 @@ export const ASSET_BANDS = [
 
 export type AssetBand = 0 | 1 | 2 | 3 | 4 | 5;
 
+/** 손실을 얼마나 감수하나: 0 안정형 / 1 균형형 / 2 공격형 */
+export const RISK_LEVELS = ['안정형', '균형형', '공격형'] as const;
+export type RiskLevel = 0 | 1 | 2;
+
+/** 돈 쓰는 방식: 0 저축 우선 / 1 균형 / 2 경험·소비 우선 */
+export const LIFESTYLES = ['저축 우선', '균형', '경험·소비 우선'] as const;
+export type Lifestyle = 0 | 1 | 2;
+
 export const INTERESTS = ['주식', '부동산', '예·적금', '코인', '절약·파이어족', '창업·사업'] as const;
 export type Interest = (typeof INTERESTS)[number];
 
@@ -19,8 +27,10 @@ export interface Profile {
   id: string;
   nickname: string;
   age: number;
-  /** 자기신고 값. 인증되지 않음. */
-  assetBand: AssetBand;
+  /** 자기신고 값(인증 안 됨). 선택 사항이라 null이면 매칭 점수에서 중립 처리. */
+  assetBand: AssetBand | null;
+  risk: RiskLevel;
+  lifestyle: Lifestyle;
   interests: Interest[];
   mode: MatchMode;
   intro: string;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ScoredCandidate } from '../core/matching';
-import { ASSET_BANDS } from '../core/types';
+import { ASSET_BANDS, LIFESTYLES, RISK_LEVELS } from '../core/types';
 import { api } from './api';
 
 export function Recommendations() {
@@ -26,11 +26,19 @@ export function Recommendations() {
       {list.length === 0 && <p className="muted">오늘 추천은 모두 확인했어요. 내일 다시 만나요.</p>}
       {list.map(({ profile: p, sharedInterests }) => (
         <article className="card" key={p.id}>
-          <div className="row"><b>{p.nickname}, {p.age}</b><span className="band">{ASSET_BANDS[p.assetBand].label}</span></div>
-          <p>{p.intro}</p>
+          <b>{p.nickname}, {p.age}</b>
+          <p className="intro">{p.intro}</p>
           <div className="tags">
-            {p.interests.map((i) => <span key={i} className={`tag ${sharedInterests.includes(i) ? 'shared' : ''}`}>{i}</span>)}
+            {p.interests.map((i) => <span key={i} className={`tag big ${sharedInterests.includes(i) ? 'shared' : ''}`}>{i}</span>)}
           </div>
+          <div className="tags">
+            <span className="tag">투자 {RISK_LEVELS[p.risk]}</span>
+            <span className="tag">소비 {LIFESTYLES[p.lifestyle]}</span>
+          </div>
+          <details>
+            <summary>더 보기</summary>
+            <p className="muted">자산 구간(본인 신고): {p.assetBand === null ? '공개 안 함' : ASSET_BANDS[p.assetBand].label}</p>
+          </details>
           <div className="row actions">
             <button className="btn secondary" onClick={() => respond(p.id, false, p.nickname)}>패스</button>
             <button className="btn" onClick={() => respond(p.id, true, p.nickname)}>관심 있어요</button>

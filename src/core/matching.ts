@@ -6,31 +6,52 @@ export interface ScoredCandidate {
   sharedInterests: Interest[];
 }
 
+/** 점수 비중 (합 100). 자산은 보조 신호라 가장 낮다. */
+export const WEIGHTS = { interest: 60, values: 22, asset: 18 } as const;
+
 function overlap(a: Interest[], b: Interest[]): Interest[] {
   return a.filter((x) => b.includes(x));
 }
 
+/** 0 차이 → 만점, 1 차이 → 절반, 그 이상 → 0 (levels 값은 0~2). */
+function closeness(a: number, b: number, max: number): number {
+  const gap = Math.abs(a - b);
+  return gap === 0 ? max : gap === 1 ? max / 2 : 0;
+}
+
+/**
+ * 자산은 후보를 걸러내지 않고 점수만 조금 깎는다.
+ * 한쪽이라도 미입력이면 중립(절반).
+ */
+function assetScore(a: Profile['assetBand'], b: Profile['assetBand']): number {
+  const max = WEIGHTS.asset;
+  if (a === null || b === null) return max / 2;
+  const gap = Math.abs(a - b);
+  return gap === 0 ? max : gap === 1 ? max * 0.7 : gap === 2 ? max * 0.35 : max * 0.1;
+}
+
 /**
  * 규칙 기반 점수 (0~100).
- * - 자산 구간 차이: 같으면 40, 1단계 차이 25, 2단계 10, 그 이상 0
- * - 관심 분야: similar 모드는 겹칠수록, different 모드는 겹치지 않을수록 가산 (최대 60)
- * 모드는 후보 본인의 선택도 존중하도록 양쪽 모드를 평균낸다.
+ * - 관심 분야(60): similar면 겹칠수록, different면 안 겹칠수록 가산. 양쪽 모드 평균.
+ * - 가치관(22): 투자 성향 11 + 소비 성향 11
+ * - 자산 구간(18): 보조 신호
  */
 export function scorePair(me: Profile, other: Profile): ScoredCandidate {
-  const gap = Math.abs(me.assetBand - other.assetBand);
-  const assetScore = gap === 0 ? 40 : gap === 1 ? 25 : gap === 2 ? 10 : 0;
-
   const shared = overlap(me.interests, other.interests);
   const union = new Set([...me.interests, ...other.interests]).size || 1;
-  const similarity = shared.length / union; // 0..1
+  const similarity = shared.length / union;
 
   const modeScore = (mode: Profile['mode']) =>
-    mode === 'similar' ? similarity * 60 : (1 - similarity) * 60;
+    (mode === 'similar' ? similarity : 1 - similarity) * WEIGHTS.interest;
   const interestScore = (modeScore(me.mode) + modeScore(other.mode)) / 2;
+
+  const valuesScore =
+    closeness(me.risk, other.risk, WEIGHTS.values / 2) +
+    closeness(me.lifestyle, other.lifestyle, WEIGHTS.values / 2);
 
   return {
     profile: other,
-    score: Math.round(assetScore + interestScore),
+    score: Math.round(interestScore + valuesScore + assetScore(me.assetBand, other.assetBand)),
     sharedInterests: shared,
   };
 }

@@ -2,13 +2,16 @@ import type { Match, Message, Profile } from '../core/types';
 import { DAILY_RECOMMENDATIONS } from '../core/types';
 import { checkMessage, isChatOpen } from '../core/chat';
 import { recommend, type ScoredCandidate } from '../core/matching';
-import { SEED_PROFILES } from './seed';
+import { SEED_PROFILES, INVITE_CODES } from './seed';
+import { isValidInvite } from '../core/invite';
 
 /**
  * 백엔드 경계. 지금은 localStorage 구현(LocalApi)이고,
  * 나중에 같은 인터페이스로 Supabase 구현체로 교체한다.
  */
 export interface Api {
+  hasInvite(): Promise<boolean>;
+  redeemInvite(code: string): Promise<boolean>;
   getMe(): Promise<Profile | null>;
   saveMe(p: Omit<Profile, 'id'>): Promise<Profile>;
   getDailyRecommendations(): Promise<ScoredCandidate[]>;
@@ -20,6 +23,7 @@ export interface Api {
 }
 
 interface State {
+  invited: boolean;
   me: Profile | null;
   /** 날짜(YYYY-MM-DD) -> 그날 노출된 후보 id */
   daily: Record<string, string[]>;
@@ -28,8 +32,8 @@ interface State {
   messages: Message[];
 }
 
-const KEY = 'gyeol.state.v1';
-const empty = (): State => ({ me: null, daily: {}, responded: {}, matches: [], messages: [] });
+const KEY = 'gyeol.state.v2';
+const empty = (): State => ({ invited: false, me: null, daily: {}, responded: {}, matches: [], messages: [] });
 const today = () => new Date().toISOString().slice(0, 10);
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -42,6 +46,18 @@ export class LocalApi implements Api {
   }
   private save(s: State) {
     this.storage.setItem(KEY, JSON.stringify(s));
+  }
+
+  async hasInvite() {
+    return this.load().invited;
+  }
+
+  async redeemInvite(code: string) {
+    if (!isValidInvite(code, INVITE_CODES)) return false;
+    const s = this.load();
+    s.invited = true;
+    this.save(s);
+    return true;
   }
 
   async getMe() {

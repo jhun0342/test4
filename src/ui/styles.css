@@ -34,3 +34,9 @@ legend { font-size: 14px; color: var(--muted); margin-bottom: 8px; padding: 0; }
 .tabbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; background: #fff; border-top: 1px solid #e5e8eb; padding-bottom: env(safe-area-inset-bottom); }
 .tabbar button { flex: 1; padding: 16px 0; border: 0; background: none; font: inherit; color: var(--muted); cursor: pointer; }
 .tabbar button.on { color: var(--blue); font-weight: 700; }
+
+.full { width: 100%; }
+.intro { font-size: 16px; line-height: 1.5; }
+.tag.big { font-size: 14px; padding: 6px 12px; }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+details p { margin-top: 6px; }
